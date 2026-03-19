@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema(
+const gymOwnerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -9,24 +9,29 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
     },
     address: {
       type: String,
-      required: true,
-    },
-    age: {
-      type: String,
-      required: true,
     },
     gender: {
       type: String,
       enum: ["male", "female", "other"],
       default: "other",
     },
+    role: {
+      type: String,
+      enum: ["admin", "gym_owner"],
+      default: "gym_owner",
+    },
   },
   { timestamps: true },
 );
 
-const User = mongoose.model("User", userSchema);
+const Gym_Owner = mongoose.model("Gym_Owner", gymOwnerSchema);
 
-module.exports = User
+module.exports = Gym_Owner;

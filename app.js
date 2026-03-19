@@ -14,8 +14,7 @@ app.get("/", async (req, res) => {
   return res.sendFile(path.join(__dirname, "index.html"));
 });
 
-const user = require("./routes/user/user.routes");
-
-app.use("/", user);
+const gymowner = require("./routing/gymownerRoute.routes");
+app.use("/", gymowner);
 
 module.exports = app;
