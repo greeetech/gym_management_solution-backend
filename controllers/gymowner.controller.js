@@ -107,12 +107,10 @@ exports.logInGym_owner = async (req, res) => {
     const gymOwner = await Gym_Owner.findOne({ email: email });
 
     if (!gymOwner) {
-      return res
-        .status(404)
-        .json({
-          status: false,
-          message: `Register yourself no data found by this Email:${email}`,
-        });
+      return res.status(404).json({
+        status: false,
+        message: `Register yourself no data found by this Email:${email}`,
+      });
     }
 
     const checkpassword = await bcrypt.compare(password, gymOwner.password);
@@ -128,12 +126,12 @@ exports.logInGym_owner = async (req, res) => {
       process.env.JWT_SECERET_GYM_OWNER,
     );
 
- const data = {
-  name:gymOwner.name,
-  email:gymOwner.email,
-  address:gymOwner.address,
-  gender:gymOwner.gender
- }
+    const data = {
+      name: gymOwner.name,
+      email: gymOwner.email,
+      address: gymOwner.address,
+      gender: gymOwner.gender,
+    };
 
     return res.status(201).json({
       status: true,
@@ -150,10 +148,91 @@ exports.logInGym_owner = async (req, res) => {
 
 exports.profileGym_Owner = async (req, res) => {
   try {
+    const user = req.user;
+
     return res.status(201).json({
       status: true,
       message: "user created successfully",
       data: user,
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, message: err.message });
+  }
+};
+
+// ================= update profile ===============
+
+exports.updateProfileGym_Owner = async (req, res) => {
+  try {
+    const user = req.user._id;
+    const data = req.body;
+
+    const { name, email, address, gender } = data;
+
+    if (name) {
+      if (typeof name !== "string") {
+        return res.status(400).json({
+          status: false,
+          message: "Provide valid string for name",
+        });
+      }
+    }
+
+    if (email) {
+      if (typeof email !== "string") {
+        return res.status(400).json({
+          status: false,
+          message: "Provide valid string for email",
+        });
+      }
+
+      if (!validateEmail(email)) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Kindly provide a valid Email" });
+      }
+    }
+
+    if (address) {
+      if (typeof address !== "string" || address.trim().length == 0) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Provide a Valid address" });
+      }
+    }
+
+    if (gender) {
+      if (!["male", "female", "other"].includes(gender)) {
+        return res.status(400).json({
+          status: false,
+          message: `gender should be one of these ${["male", " female", "other"].join(" | ")}`,
+        });
+      }
+    }
+
+    // email unique check $ne:{_id:user._id}
+    if (email) {
+      const check = await Gym_Owner.findOne({
+        email: email,
+        _id: { $ne: user._id },
+      });
+      if (check) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Email Already exist" });
+      }
+    }
+
+    const updateData = await Gym_Owner.findByIdAndUpdate(
+      user._id,
+      { $set: data },
+      { returnDocument: 'after' },
+    );
+
+    return res.status(201).json({
+      status: true,
+      message: "Profile updated successfully",
+      data: updateData,
     });
   } catch (err) {
     return res.status(500).json({ status: false, message: err.message });
