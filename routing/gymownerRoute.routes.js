@@ -1,11 +1,13 @@
-const express = require("express")
+const express = require("express");
 
+const gym_owner = express();
 
-const gym_owner = express()
+const gymownerAuthRoute = require("../routes/gymOwner/gymownerAuth.routes");
 
+const subscriptionRoute = require("../routes/gymOwner/subscriptionModel");
 
-const gymownerAuthRoute = require("../routes/gymOwner/gymownerAuth.routes")
+gym_owner.use("/gym_owner", gymownerAuthRoute);
 
-gym_owner.use("/gym_owner", gymownerAuthRoute)
+gym_owner.use("/gym_owner/subscription", subscriptionRoute);
 
-module.exports = gym_owner
+module.exports = gym_owner;

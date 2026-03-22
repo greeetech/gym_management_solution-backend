@@ -226,7 +226,7 @@ exports.updateProfileGym_Owner = async (req, res) => {
     const updateData = await Gym_Owner.findByIdAndUpdate(
       user._id,
       { $set: data },
-      { returnDocument: 'after' },
+      { returnDocument: "after" },
     );
 
     return res.status(201).json({
