@@ -34,6 +34,16 @@ exports.createSubscription = async (req, res) => {
         .json({ status: false, message: "Price should be a positive number" });
     }
 
+
+    // gross price should be greater than price
+    if (grossPriceNum <= priceNum) {
+      return res.status(400).json({
+        status: false,
+        message: "Gross Price should be greater than Price",
+      });
+    }
+
+
     const validDurations = ["Monthly", "Quarterly", "Half Yearly", "Yearly"];
     if (!duration || !validDurations.includes(duration)) {
       return res
@@ -43,10 +53,13 @@ exports.createSubscription = async (req, res) => {
 
     // check if subscription with same name already exists for the gym owner
 
-    const existingSubscription = await Subscription.findOne({
-      gymOwnerId: ownerId,
-      name: name,
-    });
+    const existingSubscription = await Subscription.findOne(
+      {
+        gymOwnerId: ownerId,
+      },
+      { $or: [{ name: name }, { duration: duration }] },
+    );
+
     if (existingSubscription) {
       return res.status(400).json({
         status: false,
@@ -81,10 +94,12 @@ exports.updateSubscription = async (req, res) => {
     const subscriptionId = req.params.id;
     const data = req.body;
     const { name, grossPrice, price, duration } = data;
+
     const subscription = await Subscription.findOne({
       _id: subscriptionId,
       gymOwnerId: ownerId,
     });
+
     if (!subscription) {
       return res
         .status(404)
@@ -97,6 +112,20 @@ exports.updateSubscription = async (req, res) => {
           .status(400)
           .json({ status: false, message: "Name should be a valid string" });
       }
+
+      const existingSubscription = await Subscription.findOne({
+        gymOwnerId: ownerId,
+        name: name,
+        _id: { $ne: subscriptionId },
+      });
+
+      if (existingSubscription) {
+        return res.status(400).json({
+          status: false,
+          message: "Subscription with the same name already exists",
+        });
+      }
+
       subscription.name = name;
     }
 
@@ -122,8 +151,6 @@ exports.updateSubscription = async (req, res) => {
       subscription.price = priceNum;
     }
 
-    // duration if  prevent duplicate $ne _id and same name for the same gym owner duration
-
     if (duration) {
       const validDurations = ["Monthly", "Quarterly", "Half Yearly", "Yearly"];
       if (!validDurations.includes(duration)) {
@@ -131,18 +158,16 @@ exports.updateSubscription = async (req, res) => {
           .status(400)
           .json({ status: false, message: "Invalid duration" });
       }
-      //check duplicate name for the same gym owner and same duration but different subscription id
+
       const existingSubscription = await Subscription.findOne({
         gymOwnerId: ownerId,
         duration: duration,
         _id: { $ne: subscriptionId },
       });
-
       if (existingSubscription) {
         return res.status(400).json({
           status: false,
-          message:
-            "Subscription with the same name and duration already exists",
+          message: "Subscription with the same duration already exists",
         });
       }
 
@@ -209,15 +234,25 @@ exports.getSubscriptionById = async (req, res) => {
       _id: subscriptionId,
       gymOwnerId: ownerId,
     });
+
     if (!subscription) {
       return res
         .status(404)
         .json({ status: false, message: "Subscription not found" });
     }
+
+// calculate discount percentage
+    const discountPercentage = Math.round(
+      ((subscription.grossPrice - subscription.price) / subscription.grossPrice) *
+        100,
+    );
+
+    const discountAmount = subscription.grossPrice - subscription.price;
+
     return res.status(200).json({
       status: true,
       message: "Subscription fetched successfully",
-      data: subscription,
+      data: { ...subscription._doc, discountPercentage, discountAmount },
     });
   } catch (err) {
     return res.status(500).json({ status: false, message: err.message });

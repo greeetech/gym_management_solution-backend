@@ -4,7 +4,7 @@ const gym_owner = express();
 
 const gymownerAuthRoute = require("../routes/gymOwner/gymownerAuth.routes");
 
-const subscriptionRoute = require("../routes/gymOwner/subscriptionModel");
+const subscriptionRoute = require("../routes/gymOwner/subscription.route");
 
 gym_owner.use("/gym_owner", gymownerAuthRoute);
 
