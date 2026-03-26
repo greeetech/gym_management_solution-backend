@@ -9,7 +9,7 @@ const gymMembersSchema = new mongoose.Schema(
     },
 
     profileImage: {
-      public_id: String,
+      filename: String,
       url: String,
     },
 
@@ -49,14 +49,6 @@ const gymMembersSchema = new mongoose.Schema(
       required: true,
     },
 
-    startDate: {
-      type: Date,
-      required: true,
-    },
-    endDate: {
-      type: Date,
-      required: true,
-    },
   },
   { timestamps: true },
 ); // will modify more

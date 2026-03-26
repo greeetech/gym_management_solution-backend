@@ -7,21 +7,25 @@ const membershipSchema = new mongoose.Schema(
       ref: "Gym_Owner",
       required: true,
     },
+
     gymMemberId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Gym_Member",
       required: true,
     },
+
     subscriptionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Subscription",
       required: true,
     },
+
     // subscription details
     name: {
       type: String,
       required: true,
     },
+
     grossPrice: {
       type: Number,
       required: true,
@@ -48,6 +52,19 @@ const membershipSchema = new mongoose.Schema(
     endDate: {
       type: Date,
       required: true,
+    },
+
+    status: {
+      type: String,
+      enum: [
+        "Pending",
+        "Active",
+        "Inactive",
+        "Expiry Soon",
+        "Expired",
+        "Cancelled",
+      ],
+      default: "Pending",
     },
   },
   { timestamps: true },
