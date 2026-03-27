@@ -128,6 +128,9 @@ exports.createGymMember = async (req, res) => {
       status: status,
     });
 
+    gymMember.membershipId = membership._id;
+    await gymMember.save();
+
     return res.status(201).json({
       status: true,
       message: "Gym member & membership created successfully",
@@ -245,7 +248,112 @@ exports.updateGymMemberDetails = async (req, res) => {
   }
 };
 
+// ========================  get gym member profile image ========================
 
-// plan upgrade logic need to build  expaired or cancelled plan can be upgraded to new plan but active plan cannot be upgraded until it is expired or cancelled and rest plan will be in active 
+exports.getMyGymMembers = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
 
+    const { search, statusFilter, page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
 
+    const query = { gymOwnerId: ownerId };
+
+    if (search) {
+      query.fullName = { $regex: search, $options: "i" };
+    }
+
+    //  Populate membership + status
+    let members = await GymMembers.find(query)
+      .populate({
+        path: "membershipId",
+        select: "status startDate endDate",
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    //  Simple filter
+    if (statusFilter && statusFilter !== "All") {
+      members = members.filter((m) => m.membershipId?.status === statusFilter);
+    }
+
+    const total = await GymMembers.countDocuments(query);
+
+    return res.status(200).json({
+      status: true,
+      message: "Gym members fetched successfully",
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / limit),
+      },
+      data: members,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: err.message,
+    });
+  }
+};
+
+//========================= get single gym member details ========================
+
+exports.getSingleGymMemberDetails = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
+    const memberId = req.params.id;
+    const gymMember = await GymMembers.findOne({
+      _id: memberId,
+      gymOwnerId: ownerId,
+    }).populate("membershipId");
+
+    if (!gymMember) {
+      return res.status(404).json({
+        status: false,
+        message: "Gym member not found",
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Gym member details fetched successfully",
+      data: gymMember,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: false,
+      message: err.message,
+    });
+  }
+};
+
+// ========================  delete gym member (soft delete) ========================
+
+exports.deleteGymMember = async (req, res) => {
+  try {
+    const memberId = req.params.id;
+    const ownerId = req.user._id;
+    const gymMember = await GymMembers.findOne({
+      _id: memberId,
+      gymOwnerId: ownerId,
+    });
+    if (!gymMember) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Gym member not found" });
+    }
+    gymMember.isDeleted = true;
+    gymMember.isDeletedAt = new Date();
+    await gymMember.save();
+    return res.status(200).json({
+      status: true,
+      message: "Gym member deleted successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({ status: false, message: err.message });
+  }
+};

@@ -49,6 +49,20 @@ const gymMembersSchema = new mongoose.Schema(
       required: true,
     },
 
+    membershipId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Membership",
+    },
+
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    isDeletedAt: {
+      type: Date,
+    },
   },
   { timestamps: true },
 ); // will modify more

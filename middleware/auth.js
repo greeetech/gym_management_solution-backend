@@ -30,6 +30,7 @@ exports.gym_ownerAuthentication = async (req, res, next) => {
 
         req.user = user;
 
+        req.token = token;
         // console.log(req.user);
         next();
       },

@@ -5,11 +5,16 @@ const connectdb = require("./config/db");
 const fileUpload = require("express-fileupload");
 const cloudinary = require("cloudinary").v2;
 
+
 const app = express();
+
+
 
 connectdb();
 
+
 app.use(express.json());
+
 
 app.use(
   fileUpload({
@@ -29,6 +34,7 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
+require("./cron/status.cron");
 
 const gymowner = require("./routing/gymownerRoute.routes");
 app.use("/", gymowner);
